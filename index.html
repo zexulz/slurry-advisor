@@ -1,21 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt">
 <head>
-  <title>Slurry Spreading Advisor</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistemas Operativos - Introdução</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--dark) 0%, #16213e 100%);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-top: 56px; /* Para tomar em conta a navbar fixa */
+        }
+        
+        header {
+            background: #A020F0; /* roxo bootstrap */
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+        
+        section {
+            padding: 60px 0;
+        }
+        
+        /* Exemplo de estilos (squircles das caixas) */
+        .content-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+    </style>
 </head>
+
 <body>
-  <h1>Slurry Spreading Advisor</h1>
+    <!-- BARRA DE NAVEGAÇÃO FIXA NO TOPO -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">Sistemas Operativos</a>
+            
+            <!-- Botão de menu para dispositivos móveis -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Conteúdo da navbar -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Início</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Sobre</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            Tipos de SO
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="#">Windows</a></li> // exemplo de dropdown
+                            <li><a class="dropdown-item" href="#">Linux</a></li>
+                            <li><a class="dropdown-item" href="#">macOS</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">Outros</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Contactos</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-  <p>Enter your location:</p>
-  <input id="lat" placeholder="Latitude">
-  <input id="lon" placeholder="Longitude">
-  <br><br>
-  <button onclick="check()">Check Conditions</button>
+    <!-- Conteúdo da página -->
+    <header>
+        <div class="container">
+            <h1 class="display-4">Sistemas Operativos</h1>
+            <p class="lead">Uma introdução aos sistemas operativos modernos</p>
+        </div>
+    </header>
 
-  <h2 id="result"></h2>
-  <p id="reasons"></p>
+    <main class="container">
+        <section>
+            <div class="content-section">
+                <h2>Caixa de texto padrao em squircle</h2>
+                <p>blahblah 67676767677. yay</p>
+            </div>
+            
+            <div class="content-section">
+                <h2>Exemplo de ciasjxa de texto com pontos</h2>
+                <ul>
+                    <li>p1</li>
+                    <li>p2</li>
+                    <li>p3</li>
+                    <li>p4</li>
+                    <li>obama</li>
+                </ul>
+            </div>
+        </section>
+    </main>
 
-  <script src="script.js"></script>
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container text-center">
+            <p>&copy; Ian Machado - Sistemas Operativos - Exemplo</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
