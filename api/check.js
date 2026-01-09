@@ -154,8 +154,8 @@ function analyzeConditions(currentData, forecastData) {
    
     const currentRain = getRainfall(current);
     const currentSnow = getSnowfall(current);
-    const windSpeed = current.wind.speed * 3.6; // Convert m/s to km/h
-    const windGust = (current.wind.gust || 0) * 3.6; // Convert m/s to km/h
+    const windSpeed = current.wind.speed * 3.6; 
+    const windGust = (current.wind.gust || 0) * 3.6; 
     const temperature = current.main.temp;
     const humidity = current.main.humidity;
     const cloudiness = current.clouds.all;
@@ -195,16 +195,16 @@ function analyzeConditions(currentData, forecastData) {
         idealHumidityMax: 80,
         maxHumidity: 90,
         
-        // Snow/Ice thresholds
-        anySnow: 0.1,                 // Any snow accumulation is critical
         
-        // Soil conditions (estimated from weather)
-        minSoilTemp: 5,               // Minimum soil temperature for absorption
-        maxSoilMoisture: 80,          // Maximum soil moisture percentage
+        anySnow: 0.1,               
+        
+        
+        minSoilTemp: 5,               
+        maxSoilMoisture: 80,          
     };
     
-    // Initialize analysis
-    let score = 0; // Start at 0, add points for good conditions
+    
+    let score = 0; 
     const reasons = [];
     const criticalFactors = [];
     const factors = {
@@ -216,8 +216,7 @@ function analyzeConditions(currentData, forecastData) {
         snow: { status: 'critical', details: '', weight: 5 }
     };
     
-    // 1. RAINFALL ANALYSIS - MOST CRITICAL (40% weight)
-    // Any current rain is BAD for slurry spreading
+   
     if (currentRain > thresholds.heavyRainThreshold) {
         score -= 40;
         factors.rain.status = 'critical';
@@ -248,7 +247,7 @@ function analyzeConditions(currentData, forecastData) {
         reasons.push('✅ No current rainfall - minimal runoff risk');
     }
     
-    // 2. FORECAST RAINFALL ANALYSIS (10% weight)
+    
     if (forecastAnalysis.next24hRain > thresholds.max24hRainHeavy) {
         score -= 10;
         factors.forecast.status = 'critical';
@@ -272,7 +271,7 @@ function analyzeConditions(currentData, forecastData) {
         reasons.push('✅ Dry forecast for next 24 hours');
     }
     
-    // 3. WIND ANALYSIS - VERY STRICT (25% weight)
+    
     const effectiveWindSpeed = Math.max(windSpeed, windGust);
     
     if (effectiveWindSpeed > thresholds.criticalWindSpeed) {
@@ -303,7 +302,7 @@ function analyzeConditions(currentData, forecastData) {
         reasons.push(`✅ Calm conditions (${effectiveWindSpeed.toFixed(1)} km/h) - ideal for precise application`);
     }
     
-    // 4. TEMPERATURE ANALYSIS - STRICTER (15% weight)
+    
     if (temperature < thresholds.absoluteMinTemp) {
         score -= 15;
         factors.temperature.status = 'critical';
@@ -337,7 +336,7 @@ function analyzeConditions(currentData, forecastData) {
         reasons.push(`⚠️ Temperature (${temperature.toFixed(1)}°C) within acceptable range`);
     }
     
-    // 5. HUMIDITY ANALYSIS (5% weight)
+   
     if (humidity >= thresholds.idealHumidityMin && humidity <= thresholds.idealHumidityMax) {
         score += 4;
         factors.humidity.status = 'excellent';
@@ -358,7 +357,7 @@ function analyzeConditions(currentData, forecastData) {
         factors.humidity.details = `Acceptable: ${humidity}%`;
     }
     
-    // 6. SNOW/ICE ANALYSIS - CRITICAL (5% weight)
+   
     if (currentSnow > thresholds.anySnow) {
         score -= 40; // Automatic fail
         factors.snow.status = 'critical';
@@ -371,8 +370,7 @@ function analyzeConditions(currentData, forecastData) {
         factors.snow.details = 'No snow/ice';
     }
     
-    // 7. WEATHER CONDITION ANALYSIS - ADDITIONAL STRICT CHECKS
-    // Check for storm conditions, fog, etc.
+    
     if (weatherCondition.includes('Thunderstorm') || weatherCondition.includes('Squall')) {
         score -= 30;
         reasons.push('❌ STORM CONDITIONS - unsafe for spreading operations');
@@ -384,40 +382,40 @@ function analyzeConditions(currentData, forecastData) {
         reasons.push('⚠️ Reduced visibility conditions - not ideal for spreading');
     }
     
-    // 8. TIME OF DAY CONSIDERATION (based on timestamp)
+    
     const currentHour = new Date().getHours();
     if (currentHour >= 10 && currentHour <= 16) {
-        // Midday - good for spreading
+        
         score += 5;
         reasons.push('✅ Daytime hours - optimal for application');
     } else if (currentHour >= 6 && currentHour <= 9) {
-        // Morning - good
+       
         score += 3;
         reasons.push('✅ Morning hours - good for application');
     } else if (currentHour >= 17 && currentHour <= 19) {
-        // Evening - acceptable
+        
         score += 1;
         reasons.push('⚠️ Evening hours - acceptable but less optimal');
     } else {
-        // Night - not recommended
+       
         score -= 5;
         reasons.push('⚠️ Nighttime hours - not recommended for spreading');
     }
     
-    // Generate detailed forecast for display (next 4 days)
+   
     const forecast = generateDetailedForecast(forecastList);
     
-    // Calculate final score (0-100 scale)
-    const maxPossibleScore = 86; // Theoretical maximum based on scoring system
+   
+    const maxPossibleScore = 86; 
     const adjustedScore = Math.max(0, Math.min(100, (score + 40) * (100 / maxPossibleScore)));
     
-    // DETERMINE FINAL RECOMMENDATION WITH STRICTER CRITERIA
+   
     let result;
     let confidence = 'high';
     
-    // Check for automatic disqualifiers FIRST
+   
     if (criticalFactors.length > 0) {
-        // Check for critical factors that make spreading impossible
+       
         const severeCriticalFactors = ['heavy_rainfall', 'heavy_rain_forecast', 'snow_ice', 'storm_conditions'];
         const hasSevereCritical = criticalFactors.some(factor => severeCriticalFactors.includes(factor));
         
@@ -426,12 +424,12 @@ function analyzeConditions(currentData, forecastData) {
             confidence = 'very high';
             reasons.unshift('CRITICAL RISK FACTORS DETECTED - DO NOT SPREAD');
         } else if (criticalFactors.length >= 2) {
-            // Multiple critical factors
+           
             result = "BAD TIME TO SPREAD SLURRY";
             confidence = 'high';
             reasons.unshift('Multiple risk factors detected - high environmental risk');
         } else {
-            // One non-severe critical factor
+           
             result = "RISKY TIME TO SPREAD SLURRY";
             confidence = 'medium';
             reasons.unshift('Significant risk factors present - caution required');
@@ -469,20 +467,19 @@ function analyzeConditions(currentData, forecastData) {
     };
 }
 
-// Analyze forecast data for the next 48 hours
+
 function analyzeForecast(forecastList) {
     let next24hRain = 0;
     let next48hRain = 0;
     let max24hWind = 0;
     let min24hTemp = Infinity;
     let max24hTemp = -Infinity;
-    let rainPeriods = 0; // Count periods with rain
+    let rainPeriods = 0; 
     
-    // Analyze next 48 hours (16 periods of 3-hour intervals)
     for (let i = 0; i < Math.min(16, forecastList.length); i++) {
         const period = forecastList[i];
         
-        // Rainfall
+        
         const periodRain = period.rain ? period.rain['3h'] || 0 : 0;
         if (periodRain > 0) {
             rainPeriods++;
@@ -490,11 +487,11 @@ function analyzeForecast(forecastList) {
         if (i < 8) next24hRain += periodRain;
         next48hRain += periodRain;
         
-        // Wind
+       
         const periodWind = period.wind.speed * 3.6;
         max24hWind = Math.max(max24hWind, periodWind);
         
-        // Temperature
+       
         min24hTemp = Math.min(min24hTemp, period.main.temp);
         max24hTemp = Math.max(max24hTemp, period.main.temp);
     }
@@ -509,12 +506,12 @@ function analyzeForecast(forecastList) {
     };
 }
 
-// Generate detailed forecast for display
+
 function generateDetailedForecast(forecastList) {
     const dailyForecast = [];
     const days = ['Today', 'Tomorrow', 'Day After Tomorrow', 'In 3 Days'];
     
-    // Group forecasts by day
+  
     const groupedByDay = {};
     
     forecastList.forEach(period => {
@@ -538,19 +535,19 @@ function generateDetailedForecast(forecastList) {
         groupedByDay[dayKey].timestamps.push(date);
     });
     
-    // Process up to 4 days
+   
     const dayKeys = Object.keys(groupedByDay).slice(0, 4);
     
     dayKeys.forEach((dayKey, index) => {
         const dayData = groupedByDay[dayKey];
         
-        // Calculate averages and find most common condition
+       
         const avgTemp = dayData.temps.reduce((a, b) => a + b, 0) / dayData.temps.length;
         const totalRain = dayData.rains.reduce((a, b) => a + b, 0);
         const avgWind = dayData.winds.reduce((a, b) => a + b, 0) / dayData.winds.length;
         const maxWind = Math.max(...dayData.winds);
         
-        // Find most common weather condition
+     
         const conditionCounts = {};
         dayData.conditions.forEach(cond => {
             conditionCounts[cond] = (conditionCounts[cond] || 0) + 1;
@@ -559,7 +556,7 @@ function generateDetailedForecast(forecastList) {
             conditionCounts[a] > conditionCounts[b] ? a : b
         );
         
-        // Determine min and max temps for the day
+        
         const minTemp = Math.min(...dayData.temps);
         const maxTemp = Math.max(...dayData.temps);
         
@@ -576,7 +573,7 @@ function generateDetailedForecast(forecastList) {
         });
     });
     
-    // Ensure we always have at least 4 days
+   
     while (dailyForecast.length < 4) {
         const nextDayIndex = dailyForecast.length;
         const placeholderDate = new Date();
@@ -598,7 +595,7 @@ function generateDetailedForecast(forecastList) {
     return dailyForecast;
 }
 
-// Helper function to map weather conditions to icons
+
 function getWeatherIcon(condition) {
     const iconMap = {
         'Clear': 'sun',
