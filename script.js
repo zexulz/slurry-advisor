@@ -1,14 +1,14 @@
-// Show loading screen
+
 function showLoading() {
     document.getElementById('loadingScreen').classList.add('active');
 }
 
-// Hide loading screen
+
 function hideLoading() {
     document.getElementById('loadingScreen').classList.remove('active');
 }
 
-// Get current location
+
 function getCurrentLocation() {
     showLoading();
     
@@ -19,7 +19,7 @@ function getCurrentLocation() {
                 document.getElementById('lon').value = position.coords.longitude.toFixed(4);
                 hideLoading();
                 
-                // Show success message
+                
                 showToast('Location detected successfully!', 'success');
             },
             (error) => {
@@ -48,12 +48,12 @@ function getCurrentLocation() {
     }
 }
 
-// Check conditions
+
 async function checkConditions() {
     const lat = document.getElementById('lat').value;
     const lon = document.getElementById('lon').value;
     
-    // Validate inputs
+    
     if (!lat || !lon) {
         showToast('Please enter both latitude and longitude coordinates.', 'error');
         return;
@@ -76,7 +76,7 @@ async function checkConditions() {
         
         const data = await response.json();
         
-        // Check if we got an error response from API
+       
         if (data.error) {
             throw new Error(data.message || 'Weather service error');
         }
@@ -87,15 +87,15 @@ async function checkConditions() {
         console.error('Error fetching data:', error);
         hideLoading();
         
-        // Show error to user
+       
         showToast(`Error: ${error.message}`, 'error');
         
-        // Hide any previous results
+       
         document.getElementById('resultsContainer').style.display = 'none';
     }
 }
 
-// Display results
+
 function displayResults(data) {
     const resultsContainer = document.getElementById('resultsContainer');
     const resultStatus = document.getElementById('resultStatus');
@@ -103,17 +103,17 @@ function displayResults(data) {
     const reasonsList = document.getElementById('reasonsList');
     const weatherInfo = document.getElementById('weatherInfo');
     
-    // Show results container
+  
     resultsContainer.style.display = 'block';
     
-    // Set status badge
+    
     const isGoodTime = data.result.includes("GOOD") || data.result.includes("EXCELLENT") || data.result.includes("MODERATELY GOOD");
     const isCritical = data.result.includes("BAD") || data.result.includes("RISKY");
     
     resultStatus.textContent = isCritical ? "Not Recommended" : "Recommended";
     resultStatus.className = `status-badge ${isCritical ? 'bad' : 'good'}`;
     
-    // Set message
+    
     if (data.result.includes("EXCELLENT")) {
         resultMessage.innerHTML = `
             <i class="fas fa-check-circle" style="color: var(--success-green); margin-right: 10px;"></i>
@@ -147,7 +147,7 @@ function displayResults(data) {
         resultMessage.style.background = 'rgba(230, 126, 34, 0.1)';
         resultMessage.style.borderLeft = '4px solid #e67e22';
     } else {
-        // BAD TIME
+        
         resultMessage.innerHTML = `
             <i class="fas fa-times-circle" style="color: var(--warning-red); margin-right: 10px;"></i>
             <strong>Unfavorable conditions detected.</strong> It is not recommended to spread slurry at this time. 
@@ -157,7 +157,7 @@ function displayResults(data) {
         resultMessage.style.borderLeft = '4px solid var(--warning-red)';
     }
     
-    // Set reasons
+  
     reasonsList.innerHTML = '';
     if (data.reasons && data.reasons.length > 0) {
         data.reasons.forEach(reason => {
@@ -171,14 +171,14 @@ function displayResults(data) {
         reasonsList.appendChild(li);
     }
     
-    // Set weather forecast
+    
     weatherInfo.innerHTML = '';
     if (data.forecast && data.forecast.length > 0) {
         data.forecast.forEach(day => {
             const weatherCard = document.createElement('div');
             weatherCard.className = 'weather-card';
             
-            // Map icon names to FontAwesome classes
+           
             const iconMap = {
                 'sun': 'fas fa-sun',
                 'cloud': 'fas fa-cloud',
@@ -209,7 +209,7 @@ function displayResults(data) {
             weatherInfo.appendChild(weatherCard);
         });
     } else {
-        // No forecast data available
+       
         const noDataCard = document.createElement('div');
         noDataCard.className = 'weather-card no-data';
         noDataCard.innerHTML = `
@@ -221,7 +221,7 @@ function displayResults(data) {
         weatherInfo.appendChild(noDataCard);
     }
     
-    // Add location info if available
+   
     if (data.metadata && data.metadata.location) {
         const locationInfo = document.createElement('div');
         locationInfo.className = 'location-info';
@@ -237,31 +237,31 @@ function displayResults(data) {
         document.querySelector('.recommendation-content').appendChild(locationInfo);
     }
     
-    // Scroll to results
+    
     resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     
-    // Show success message
+    
     showToast('Analysis complete! Recommendations ready.', 'success');
     
-    // Hide loading screen
+    
     hideLoading();
 }
 
-// Toast notification
+
 function showToast(message, type = 'info') {
-    // Remove existing toast
+   
     const existingToast = document.querySelector('.toast');
     if (existingToast) {
         existingToast.remove();
     }
     
-    // Icon based on type
+   
     let icon = 'info-circle';
     if (type === 'success') icon = 'check-circle';
     if (type === 'error') icon = 'exclamation-circle';
     if (type === 'warning') icon = 'exclamation-triangle';
     
-    // Create toast
+    
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `
@@ -269,7 +269,7 @@ function showToast(message, type = 'info') {
         <span>${message}</span>
     `;
     
-    // Add styles
+    
     toast.style.cssText = `
         position: fixed;
         top: 20px;
@@ -292,7 +292,7 @@ function showToast(message, type = 'info') {
     
     document.body.appendChild(toast);
     
-    // Remove after 4 seconds
+    
     setTimeout(() => {
         toast.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => {
@@ -303,7 +303,7 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-// Add CSS for toast animations
+
 if (!document.querySelector('#toast-styles')) {
     const toastStyles = document.createElement('style');
     toastStyles.id = 'toast-styles';
@@ -369,7 +369,7 @@ if (!document.querySelector('#toast-styles')) {
     document.head.appendChild(toastStyles);
 }
 
-// Add event listeners for Enter key
+
 document.getElementById('lat').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         checkConditions();
@@ -382,7 +382,7 @@ document.getElementById('lon').addEventListener('keypress', function(e) {
     }
 });
 
-// Form validation for coordinates
+
 document.getElementById('lat').addEventListener('input', function(e) {
     const value = parseFloat(e.target.value);
     if (value < -90 || value > 90) {
@@ -405,13 +405,13 @@ document.getElementById('lon').addEventListener('input', function(e) {
     }
 });
 
-// Initialize with sample coordinates for demo (optional)
+
 window.addEventListener('DOMContentLoaded', () => {
-    // Set sample coordinates (Central Europe)
+   
     document.getElementById('lat').value = '50.0755';
     document.getElementById('lon').value = '14.4378';
     
-    // Add hover effects to all buttons
+    
     const buttons = document.querySelectorAll('button');
     buttons.forEach(button => {
         button.addEventListener('mouseenter', function() {
@@ -422,7 +422,7 @@ window.addEventListener('DOMContentLoaded', () => {
             this.style.transform = 'translateY(0)';
         });
         
-        // Add ripple effect on click
+       
         button.addEventListener('click', function(e) {
             const ripple = document.createElement('span');
             const rect = this.getBoundingClientRect();
@@ -451,7 +451,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // Add ripple animation
+   
     if (!document.querySelector('#ripple-styles')) {
         const rippleStyles = document.createElement('style');
         rippleStyles.id = 'ripple-styles';
@@ -471,7 +471,7 @@ window.addEventListener('DOMContentLoaded', () => {
         document.head.appendChild(rippleStyles);
     }
     
-    // Add input focus effects
+    
     const inputs = document.querySelectorAll('input');
     inputs.forEach(input => {
         input.addEventListener('focus', function() {
@@ -484,7 +484,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// Share report functionality
+
 document.addEventListener('click', function(e) {
     if (e.target.closest('.share-btn')) {
         const resultText = document.getElementById('resultMessage').textContent;
@@ -505,7 +505,7 @@ document.addEventListener('click', function(e) {
                     }
                 });
         } else {
-            // Fallback: Copy to clipboard
+            
             const textToCopy = `Slurry Spreading Recommendation\nLocation: ${location}\nResult: ${resultText}\n\nGenerated by Eco-Spread Advisor`;
             
             navigator.clipboard.writeText(textToCopy)
@@ -514,7 +514,7 @@ document.addEventListener('click', function(e) {
         }
     }
     
-    // Schedule reminder button
+   
     if (e.target.closest('.schedule-btn')) {
         showToast('Reminder feature coming soon!', 'info');
     }
