@@ -4,12 +4,12 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    // Handle OPTIONS request for CORS preflight
+   
     if (req.method === 'OPTIONS') {
         return res.status(200).end();
     }
     
-    // Only allow GET requests
+    
     if (req.method !== 'GET') {
         return res.status(405).json({ 
             error: 'Method not allowed',
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     
     const { lat, lon } = req.query;
     
-    // Validate input parameters
+   
     if (!lat || !lon) {
         return res.status(400).json({ 
             error: 'Missing parameters',
@@ -50,13 +50,13 @@ export default async function handler(req, res) {
     }
     
     try {
-        // Fetch current weather and forecast in parallel for efficiency
+        
         const [currentResponse, forecastResponse] = await Promise.all([
             fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`),
             fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`)
         ]);
         
-        // Check if both API calls were successful
+       
         if (!currentResponse.ok) {
             const errorText = await currentResponse.text();
             throw new Error(`Weather API error (${currentResponse.status}): ${errorText}`);
@@ -72,15 +72,15 @@ export default async function handler(req, res) {
             forecastResponse.json()
         ]);
         
-        // Validate API response structure
+        
         if (!currentData.main || !forecastData.list) {
             throw new Error('Invalid API response structure');
         }
         
-        // Analyze conditions
+       
         const analysis = analyzeConditions(currentData, forecastData);
         
-        // Prepare response
+      
         const response = {
             result: analysis.result,
             reasons: analysis.reasons,
@@ -130,7 +130,7 @@ export default async function handler(req, res) {
     }
 }
 
-// Helper function to extract rainfall from different API response formats
+
 function getRainfall(weatherData) {
     if (weatherData.rain) {
         return weatherData.rain['1h'] || weatherData.rain['3h'] || 0;
@@ -138,7 +138,7 @@ function getRainfall(weatherData) {
     return 0;
 }
 
-// Helper function to extract snowfall from different API response formats
+
 function getSnowfall(weatherData) {
     if (weatherData.snow) {
         return weatherData.snow['1h'] || weatherData.snow['3h'] || 0;
@@ -146,12 +146,12 @@ function getSnowfall(weatherData) {
     return 0;
 }
 
-// Main analysis function with stricter thresholds
+
 function analyzeConditions(currentData, forecastData) {
     const current = currentData;
     const forecastList = forecastData.list;
     
-    // Extract current conditions
+   
     const currentRain = getRainfall(current);
     const currentSnow = getSnowfall(current);
     const windSpeed = current.wind.speed * 3.6; // Convert m/s to km/h
@@ -162,28 +162,28 @@ function analyzeConditions(currentData, forecastData) {
     const weatherCondition = current.weather[0]?.main || '';
     const weatherDescription = current.weather[0]?.description || '';
     
-    // Analyze next 24-48 hours forecast for decision making
+   
     const forecastAnalysis = analyzeForecast(forecastList);
     
-    // STRICTER thresholds based on agricultural best practices and regulations
+   
     const thresholds = {
-        // Rain thresholds (mm) - MUCH STRICTER
-        rainTolerance: 0.1,           // Any measurable rain is problematic
-        maxCurrentRain: 0.5,          // Immediate spreading risk (very low)
-        moderateRainThreshold: 1.0,   // Moderate rain threshold
-        heavyRainThreshold: 2.5,      // Heavy rain threshold
+       
+        rainTolerance: 0.1,           
+        maxCurrentRain: 0.5,         
+        moderateRainThreshold: 1.0,  
+        heavyRainThreshold: 2.5,     
         
-        // 24-hour forecast rain thresholds
-        max24hRainTotal: 3,           // Total rain in next 24h that triggers warning
-        max24hRainHeavy: 5,           // Total rain that triggers critical warning
+       
+        max24hRainTotal: 3,          
+        max24hRainHeavy: 5,          
         
-        // Wind thresholds (km/h) - STRICTER
-        idealWindMax: 10,             // Ideal maximum wind speed
-        warningWindSpeed: 15,         // Wind speed that triggers warning
-        criticalWindSpeed: 20,        // Wind speed that triggers critical warning
-        maxWindGust: 25,              // Maximum allowed gust
         
-        // Temperature thresholds (°C)
+        idealWindMax: 10,            
+        warningWindSpeed: 15,        
+        criticalWindSpeed: 20,        
+        maxWindGust: 25,             
+        
+      
         absoluteMinTemp: 3,           // Minimum temperature for spreading
         idealMinTemp: 5,
         idealMaxTemp: 18,
