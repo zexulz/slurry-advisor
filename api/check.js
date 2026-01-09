@@ -120,7 +120,7 @@ export default async function handler(req, res) {
     } catch (error) {
         console.error('API Error:', error.message);
         
-        // Return only error response, no mock data
+       
         res.status(500).json({ 
             error: 'Weather service unavailable',
             message: 'Unable to fetch weather data. Please try again later or check your coordinates.',
@@ -184,12 +184,12 @@ function analyzeConditions(currentData, forecastData) {
         maxWindGust: 25,             
         
       
-        absoluteMinTemp: 3,           // Minimum temperature for spreading
+        absoluteMinTemp: 3,           
         idealMinTemp: 5,
         idealMaxTemp: 18,
-        absoluteMaxTemp: 25,          // Maximum temperature for spreading
+        absoluteMaxTemp: 25,         
         
-        // Humidity thresholds (%)
+        
         minHumidity: 40,
         idealHumidityMin: 60,
         idealHumidityMax: 80,
