@@ -1,8 +1,3 @@
-async function geocodeEircode(eircode) {
-    const res = await fetch(`/api/geocode-eircode?eircode=${encodeURIComponent(eircode)}`);
-    if (!res.ok) throw new Error("Invalid Eircode");
-    return await res.json();
-}
 
 function showLoading() {
     document.getElementById('loadingScreen').classList.add('active');
@@ -55,29 +50,9 @@ function getCurrentLocation() {
 
 
 async function checkConditions() {
-    let lat = document.getElementById('lat').value;
-let lon = document.getElementById('lon').value;
-const eircode = document.getElementById('eircode').value.trim();
-// 🆕 If Eircode is entered and coordinates are empty
-if (eircode && (!lat || !lon)) {
-    try {
-        showLoading();
-        const coords = await geocodeEircode(eircode);
-
-        lat = coords.lat;
-        lon = coords.lon;
-
-        // Fill coordinate inputs so existing logic continues unchanged
-        document.getElementById('lat').value = parseFloat(lat).toFixed(4);
-        document.getElementById('lon').value = parseFloat(lon).toFixed(4);
-
-        showToast('Eircode located successfully!', 'success');
-    } catch (error) {
-        hideLoading();
-        showToast('Invalid Eircode. Please try again.', 'error');
-        return;
-    }
-}
+    const lat = document.getElementById('lat').value;
+    const lon = document.getElementById('lon').value;
+    
     
     if (!lat || !lon) {
         showToast('Please enter both latitude and longitude coordinates.', 'error');
