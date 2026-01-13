@@ -16,8 +16,8 @@
                 <div class="leaf leaf2"></div>
                 <div class="leaf leaf3"></div>
             </div>
-            <p>Analyzing weather conditions...</p>
-            <div class="loading-subtitle">Checking soil suitability and environmental factors</div>
+            <p>Analyzing conditions...</p>
+            <div class="loading-subtitle">Fetching location data and weather factors</div>
         </div>
     </div>
 
@@ -47,17 +47,15 @@
 
             <div class="input-section glass-card">
                 <h3><i class="fas fa-map-marker-alt"></i> Enter Your Location</h3>
-                <p class="input-description">Provide coordinates or allow location access for precise recommendations</p>
+                <p class="input-description">Enter an Eircode or use your GPS for precise local recommendations</p>
                 
                 <div class="input-group">
-                    <div class="input-with-icon">
-                        <i class="fas fa-globe-europe"></i>
-                        <input type="number" id="lat" placeholder="Latitude (e.g., 52.5200)" step="any">
+                    <div class="input-with-icon" style="grid-column: 1 / -1;">
+                        <i class="fas fa-map-pin"></i>
+                        <input type="text" id="eircode" placeholder="Enter Eircode (e.g., D02 XN52)" style="text-transform: uppercase;">
                     </div>
-                    <div class="input-with-icon">
-                        <i class="fas fa-globe-americas"></i>
-                        <input type="number" id="lon" placeholder="Longitude (e.g., 13.4050)" step="any">
-                    </div>
+                    <input type="hidden" id="lat">
+                    <input type="hidden" id="lon">
                 </div>
                 
                 <div class="button-group">
@@ -71,7 +69,7 @@
                 
                 <div class="info-tip">
                     <i class="fas fa-info-circle"></i>
-                    <p>For best results, check in the morning for same-day spreading decisions.</p>
+                    <p>Using an Eircode ensures we analyze the specific weather for your townland.</p>
                 </div>
             </div>
 
