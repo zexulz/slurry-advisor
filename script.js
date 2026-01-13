@@ -1,7 +1,12 @@
-// 🆕 Convert Eircode to coordinates (Ireland)
+// 🆕 Convert Eircode to coordinates (Ireland ONLY)
 async function geocodeEircode(eircode) {
     const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(eircode + ", Ireland")}`
+        `https://nominatim.openstreetmap.org/search?` +
+        `format=json` +
+        `&countrycodes=ie` +           // 🇮🇪 FORCE IRELAND
+        `&addressdetails=1` +
+        `&limit=1` +
+        `&q=${encodeURIComponent(eircode)}`
     );
 
     if (!response.ok) {
@@ -11,7 +16,7 @@ async function geocodeEircode(eircode) {
     const data = await response.json();
 
     if (!data || data.length === 0) {
-        throw new Error("Invalid Eircode");
+        throw new Error("Invalid Irish Eircode");
     }
 
     return {
