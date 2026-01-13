@@ -8,7 +8,7 @@ function hideLoading() {
 
 function getCurrentLocation() {
     showLoading();
-    
+
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
@@ -17,10 +17,9 @@ function getCurrentLocation() {
                 hideLoading();
                 showToast('Location detected successfully!', 'success');
             },
-            (error) => {
+            () => {
                 hideLoading();
-                let errorMessage = 'Unable to retrieve your location. Please enter coordinates manually.';
-                showToast(errorMessage, 'error');
+                showToast('Unable to retrieve your location.', 'error');
             }
         );
     } else {
@@ -30,34 +29,32 @@ function getCurrentLocation() {
 }
 
 /* =========================
-   🆕 EIRCODE → COORDINATES
-   Uses OpenStreetMap (FREE)
+   EIRCODE → COORDINATES
 ========================= */
 async function geocodeEircode(eircode) {
     const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(eircode + ", Ireland")}`
     );
 
-    const results = await response.json();
+    const data = await response.json();
 
-    if (!results || results.length === 0) {
+    if (!data || data.length === 0) {
         throw new Error('Invalid Eircode');
     }
 
     return {
-        lat: results[0].lat,
-        lon: results[0].lon
+        lat: data[0].lat,
+        lon: data[0].lon
     };
 }
 
 async function checkConditions() {
     let lat = document.getElementById('lat').value;
     let lon = document.getElementById('lon').value;
+    const eircodeInput = document.getElementById('eircode');
+    const eircode = eircodeInput ? eircodeInput.value.trim() : '';
 
-    // 🆕 Read Eircode input
-    const eircode = document.getElementById('eircode')?.value.trim();
-
-    // 🆕 If Eircode is entered, convert it to coordinates
+    // If Eircode is provided and coordinates are empty → convert
     if (eircode && (!lat || !lon)) {
         try {
             showLoading();
@@ -65,26 +62,24 @@ async function checkConditions() {
             lat = coords.lat;
             lon = coords.lon;
 
-            // 🆕 Populate coordinate fields (visual feedback)
             document.getElementById('lat').value = parseFloat(lat).toFixed(4);
             document.getElementById('lon').value = parseFloat(lon).toFixed(4);
 
             showToast('Eircode located successfully!', 'success');
-        } catch (error) {
+        } catch (err) {
             hideLoading();
-            showToast('Invalid Eircode. Please check and try again.', 'error');
+            showToast('Invalid Eircode. Please try again.', 'error');
             return;
         }
     }
 
-    // Existing validation (UNCHANGED)
     if (!lat || !lon) {
         showToast('Please enter coordinates or an Eircode.', 'error');
         return;
     }
 
-    if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-        showToast('Please enter valid coordinates.', 'error');
+    if (isNaN(lat) || isNaN(lon)) {
+        showToast('Invalid coordinates.', 'error');
         return;
     }
 
@@ -96,28 +91,46 @@ async function checkConditions() {
         displayResults(data);
     } catch (error) {
         hideLoading();
-        showToast(`Error: ${error.message}`, 'error');
-        document.getElementById('resultsContainer').style.display = 'none';
+        showToast('Failed to fetch weather data.', 'error');
     }
 }
-
-/* ===== EVERYTHING BELOW IS UNCHANGED ===== */
 
 function displayResults(data) {
     const resultsContainer = document.getElementById('resultsContainer');
     resultsContainer.style.display = 'block';
     hideLoading();
-    showToast('Analysis complete! Recommendations ready.', 'success');
+    showToast('Analysis complete!', 'success');
 }
 
 function showToast(message, type = 'info') {
-    const existingToast = document.querySelector('.toast');
-    if (existingToast) existingToast.remove();
+    const existing = document.querySelector('.toast');
+    if (existing) existing.remove();
 
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    toast.innerHTML = `<span>${message}</span>`;
+    toast.textContent = message;
+
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #333;
+        color: white;
+        padding: 12px 18px;
+        border-radius: 8px;
+        z-index: 9999;
+    `;
+
     document.body.appendChild(toast);
 
-    setTimeout(() => toast.remove(), 4000);
+    setTimeout(() => toast.remove(), 3500);
 }
+
+/* ENTER KEY SUPPORT */
+document.getElementById('lat').addEventListener('keypress', e => {
+    if (e.key === 'Enter') checkConditions();
+});
+
+document.getElementById('lon').addEventListener('keypress', e => {
+    if (e.key === 'Enter') checkConditions();
+});
