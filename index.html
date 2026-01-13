@@ -47,19 +47,21 @@
 
             <div class="input-section glass-card">
                 <h3><i class="fas fa-map-marker-alt"></i> Enter Your Location</h3>
-                <p class="input-description">Provide an Eircode or allow location access for precise recommendations</p>
+                <p class="input-description">Provide coordinates or allow location access for precise recommendations</p>
                 
                 <div class="input-group">
-                    <div class="input-with-icon" style="grid-column: 1 / -1;">
-                        <i class="fas fa-search-location"></i>
-                        <input type="text" id="eircode-input" placeholder="Enter Eircode (e.g., D02 X285)" style="text-transform: uppercase;">
+                    <div class="input-with-icon">
+                        <i class="fas fa-globe-europe"></i>
+                        <input type="number" id="lat" placeholder="Latitude (e.g., 52.5200)" step="any">
                     </div>
-                    <input type="hidden" id="lat">
-                    <input type="hidden" id="lon">
+                    <div class="input-with-icon">
+                        <i class="fas fa-globe-americas"></i>
+                        <input type="number" id="lon" placeholder="Longitude (e.g., 13.4050)" step="any">
+                    </div>
                 </div>
                 
                 <div class="button-group">
-                    <button id="checkBtn" class="primary-btn" onclick="handleEircodeSearch()">
+                    <button id="checkBtn" class="primary-btn" onclick="checkConditions()">
                         <i class="fas fa-search"></i> Analyze Conditions
                     </button>
                     <button id="locationBtn" class="secondary-btn" onclick="getCurrentLocation()">
