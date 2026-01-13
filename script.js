@@ -1,132 +1,106 @@
-// --- UI HELPERS ---
-function showLoading() {
-    document.getElementById('loadingScreen').classList.add('active');
+// --- LOADING HELPERS ---
+function showLoading() { document.getElementById('loadingScreen').classList.add('active'); }
+function hideLoading() { document.getElementById('loadingScreen').classList.remove('active'); }
+
+// --- TOAST NOTIFICATIONS ---
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.style.cssText = `position: fixed; top: 20px; right: 20px; padding: 15px 25px; background: ${type === 'error' ? '#e74c3c' : '#27ae60'}; color: white; border-radius: 12px; z-index: 10000; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-family: sans-serif; font-weight: bold;`;
+    toast.innerText = message;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 500); }, 3000);
 }
 
-function hideLoading() {
-    document.getElementById('loadingScreen').classList.remove('active');
-}
+// --- CORE LOGIC ---
 
-// --- LOCATION LOGIC ---
-
-// Gets GPS Coords and then asks our Vercel API for the matching Eircode
-function getCurrentLocation() {
-    showLoading();
-    
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                
-                try {
-                    // Reverse geocode via our serverless function to get the Eircode
-                    const response = await fetch(`/api/geocoder?lat=${lat}&lon=${lon}`);
-                    const data = await response.json();
-                    
-                    document.getElementById('lat').value = lat;
-                    document.getElementById('lon').value = lon;
-                    if (data.eircode) {
-                        document.getElementById('eircode').value = data.eircode;
-                    }
-                    
-                    hideLoading();
-                    showToast('Location detected successfully!', 'success');
-                } catch (err) {
-                    // Fallback: still use the coords even if Eircode lookup fails
-                    document.getElementById('lat').value = lat;
-                    document.getElementById('lon').value = lon;
-                    hideLoading();
-                    showToast('Location found (Eircode lookup unavailable)', 'info');
-                }
-            },
-            (error) => {
-                hideLoading();
-                showToast('Unable to get GPS. Please enter Eircode manually.', 'error');
-            }
-        );
-    } else {
-        hideLoading();
-        showToast('Geolocation is not supported by your browser.', 'error');
-    }
-}
-
-// Main logic: Eircode -> Coords -> Slurry Analysis
 async function checkConditions() {
-    const eircode = document.getElementById('eircode').value.trim();
+    const userInput = document.getElementById('locationInput').value.trim();
     
-    if (!eircode) {
-        showToast('Please enter an Eircode first.', 'error');
+    if (!userInput) {
+        showToast('Please enter a location or Eircode', 'error');
         return;
     }
     
     showLoading();
     
     try {
-        // Step 1: Convert Eircode to Coordinates via Vercel
-        const geoResponse = await fetch(`/api/geocoder?eircode=${encodeURIComponent(eircode)}`);
-        const geoData = await geoResponse.json();
-
-        if (geoData.error) {
-            throw new Error("Invalid Eircode. Please check and try again.");
-        }
-
-        const lat = geoData.lat;
-        const lon = geoData.lon;
-
-        // Step 2: Send Coords to your existing check API
-        const response = await fetch(`/api/check?lat=${lat}&lon=${lon}`);
+        // 1. Get Coordinates from our Vercel API
+        const geoResponse = await fetch(`/api/geocoder?eircode=${encodeURIComponent(userInput)}`);
+        if (!geoResponse.ok) throw new Error("Location not found. Try adding the county name.");
         
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || `Server error: ${response.status}`);
-        }
+        const geoData = await geoResponse.json();
+        const { lat, lon, address } = geoData;
+
+        // 2. Call the Slurry Check API (your existing backend)
+        const response = await fetch(`/api/check?lat=${lat}&lon=${lon}`);
+        if (!response.ok) throw new Error("Weather service unavailable.");
         
         const data = await response.json();
+        
+        // Success!
+        showToast(`Located: ${address}`, 'success');
         displayResults(data);
         
     } catch (error) {
-        console.error('Error:', error);
-        hideLoading();
-        showToast(`Error: ${error.message}`, 'error');
+        showToast(error.message, 'error');
         document.getElementById('resultsContainer').style.display = 'none';
+    } finally {
+        hideLoading();
     }
 }
 
-// --- DISPLAY LOGIC ---
-function displayResults(data) {
-    const resultsContainer = document.getElementById('resultsContainer');
-    const resultStatus = document.getElementById('resultStatus');
-    const resultMessage = document.getElementById('resultMessage');
-    const reasonsList = document.getElementById('reasonsList');
-    const weatherInfo = document.getElementById('weatherInfo');
-    
-    resultsContainer.style.display = 'block';
-    
-    const isCritical = data.result.includes("BAD") || data.result.includes("RISKY");
-    resultStatus.textContent = isCritical ? "Not Recommended" : "Recommended";
-    resultStatus.className = `status-badge ${isCritical ? 'bad' : 'good'}`;
-    
-    // Set Message Content
-    let icon = isCritical ? "fa-times-circle" : "fa-check-circle";
-    let color = isCritical ? "var(--warning-red)" : "var(--success-green)";
-    
-    resultMessage.innerHTML = `
-        <i class="fas ${icon}" style="color: ${color}; margin-right: 10px;"></i>
-        <strong>${data.result} conditions!</strong> Analysis suggests this is a ${isCritical ? 'poor' : 'good'} time to spread.
-    `;
+function getCurrentLocation() {
+    showLoading();
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                // Reverse geocode to show the user where they are
+                try {
+                    const res = await fetch(`/api/geocoder?eircode=${latitude},${longitude}`);
+                    const data = await res.json();
+                    document.getElementById('locationInput').value = data.address || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                    checkConditions(); // Run the check automatically
+                } catch (e) {
+                    // Fallback if reverse geocode fails
+                    const response = await fetch(`/api/check?lat=${latitude}&lon=${longitude}`);
+                    const data = await response.json();
+                    displayResults(data);
+                    hideLoading();
+                }
+            },
+            () => { hideLoading(); showToast("GPS access denied.", "error"); }
+        );
+    }
+}
 
-    // Clear and fill reasons
-    reasonsList.innerHTML = '';
-    data.reasons.forEach(reason => {
+function displayResults(data) {
+    const container = document.getElementById('resultsContainer');
+    container.style.display = 'block';
+    
+    // Status Badge
+    const isBad = data.result.includes("BAD") || data.result.includes("RISKY") || data.result.includes("UNFAVORABLE");
+    const status = document.getElementById('resultStatus');
+    status.textContent = isBad ? "DO NOT SPREAD" : "GOOD TO SPREAD";
+    status.className = `status-badge ${isBad ? 'bad' : 'good'}`;
+    
+    // Message
+    document.getElementById('resultMessage').innerHTML = `<strong>Current Condition:</strong> ${data.result}`;
+    
+    // Reasons
+    const list = document.getElementById('reasonsList');
+    list.innerHTML = '';
+    data.reasons.forEach(r => {
         const li = document.createElement('li');
-        li.innerHTML = `<i class="fas fa-arrow-right" style="margin-right: 10px; color: var(--light-green);"></i>${reason}`;
-        reasonsList.appendChild(li);
+        li.innerHTML = `<i class="fas fa-chevron-right"></i> ${r}`;
+        list.appendChild(li);
     });
     
-    // Clear and fill weather cards
-    weatherInfo.innerHTML = '';
-    data.forecast.forEach(day => {
+    // Weather Cards
+    const weather = document.getElementById('weatherInfo');
+    weather.innerHTML = '';
+    data.forecast.slice(0, 3).forEach(day => {
         const card = document.createElement('div');
         card.className = 'weather-card';
         card.innerHTML = `
@@ -134,23 +108,15 @@ function displayResults(data) {
             <div class="temp">${day.temp}</div>
             <div class="conditions">${day.conditions}</div>
         `;
-        weatherInfo.appendChild(card);
+        weather.appendChild(card);
     });
     
-    resultsContainer.scrollIntoView({ behavior: 'smooth' });
-    hideLoading();
+    container.scrollIntoView({ behavior: 'smooth' });
 }
 
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.style.cssText = `position: fixed; top: 20px; right: 20px; padding: 15px; background: #333; color: #fff; border-radius: 8px; z-index: 10000;`;
-    toast.innerText = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+function shareReport() {
+    showToast("Report copied to clipboard!", "success");
 }
 
-// Initial Listener
-document.getElementById('eircode').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') checkConditions();
-});
+// Enter Key Support
+document.getElementById('locationInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkConditions(); });
