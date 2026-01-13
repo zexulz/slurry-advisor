@@ -1,14 +1,7 @@
-// 🆕 Eircode → coordinates (secure, server-side)
 async function geocodeEircode(eircode) {
-    const response = await fetch(
-        `/api/geocode-eircode?eircode=${encodeURIComponent(eircode)}`
-    );
-
-    if (!response.ok) {
-        throw new Error("Invalid Eircode");
-    }
-
-    return await response.json();
+    const res = await fetch(`/api/geocode-eircode?eircode=${encodeURIComponent(eircode)}`);
+    if (!res.ok) throw new Error("Invalid Eircode");
+    return await res.json();
 }
 
 function showLoading() {
