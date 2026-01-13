@@ -1,36 +1,29 @@
 export default async function handler(req, res) {
     const { eircode } = req.query;
-    const apiKey = process.env.GEO_API_KEY;
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
 
-    if (!apiKey) {
-        return res.status(500).json({ error: "API Key is missing in Vercel settings" });
-    }
+    if (!eircode) return res.status(400).json({ error: "No location provided" });
 
-    if (!eircode) {
-        return res.status(400).json({ error: "No location provided" });
-    }
-
-    // This URL is optimized for Ireland. It searches for the text and biases results to IE.
-    const url = `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(eircode)}&filter=countrycode:ie&bias=countrycode:ie&limit=1&apiKey=${apiKey}`;
+    // We add 'components=country:IE' to force Google to look in Ireland first
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(eircode)}&components=country:IE&key=${apiKey}`;
 
     try {
         const response = await fetch(url);
         const data = await response.json();
 
-        if (data.features && data.features.length > 0) {
-            const bestMatch = data.features[0];
-            const [lon, lat] = bestMatch.geometry.coordinates;
-            const address = bestMatch.properties.formatted;
+        if (data.status === "OK") {
+            const result = data.results[0];
+            const lat = result.geometry.location.lat;
+            const lon = result.geometry.location.lng;
+            const address = result.formatted_address;
             
-            res.status(200).json({ 
-                lat: lat, 
-                lon: lon, 
-                address: address 
-            });
+            res.status(200).json({ lat, lon, address });
+        } else if (data.status === "ZERO_RESULTS") {
+            res.status(404).json({ error: "Eircode not found. Check the spelling or try your Townland." });
         } else {
-            res.status(404).json({ error: "Location not found. Try adding the county (e.g. 'Cashel, Tipperary')" });
+            res.status(500).json({ error: "Google API error: " + data.status });
         }
     } catch (err) {
-        res.status(500).json({ error: "Server error connecting to map provider" });
+        res.status(500).json({ error: "Connection error" });
     }
 }
