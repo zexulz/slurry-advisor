@@ -3,38 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eco-Spread | Slurry Advisor</title>
+    <title>Eco-Spread | Slurry Spreading Advisor</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="loadingScreen" class="loading-screen">
         <div class="loading-content">
-            <p>Analyzing Conditions...</p>
+            <div class="leaf-loader">
+                <div class="leaf leaf1"></div>
+                <div class="leaf leaf2"></div>
+                <div class="leaf leaf3"></div>
+            </div>
+            <p>Locating & Analyzing...</p>
+            <div class="loading-subtitle">Checking Met Éireann data for your area</div>
         </div>
     </div>
 
     <div class="container">
         <header class="header">
-            <h1>Eco-Spread</h1>
-            <p>Ireland's Slurry Spreading Advisor</p>
+            <div class="logo">
+                <i class="fas fa-leaf"></i>
+                <h1>Eco-Spread</h1>
+            </div>
+            <p class="tagline">Intelligent Slurry Spreading Advisor</p>
         </header>
 
-        <div class="input-section glass-card">
-            <input type="text" id="locationInput" placeholder="Enter Eircode or Townland" style="width: 100%; padding: 15px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ddd;">
-            <button class="primary-btn" onclick="checkConditions()" style="width: 100%;">Check Conditions</button>
-        </div>
-
-        <div id="resultsContainer" class="results-container" style="display: none; margin-top: 30px;">
-            <div class="glass-card">
-                <div id="resultStatus" class="status-badge"></div>
-                <div id="resultMessage" style="margin: 20px 0;"></div>
-                <h4>Key Factors:</h4>
-                <ul id="reasonsList"></ul>
-                <h4>Forecast:</h4>
-                <div id="weatherInfo" class="weather-cards" style="display: flex; gap: 10px; justify-content: space-between;"></div>
+        <main class="main-content">
+            <div class="hero-section">
+                <div class="hero-text">
+                    <h2>Optimize Your Slurry Spreading</h2>
+                    <p>Get science-based recommendations for slurry application based on real-time weather and environmental factors.</p>
+                </div>
+                <div class="hero-image">
+                    <div class="nature-icon">
+                        <i class="fas fa-tractor"></i>
+                        <i class="fas fa-cloud-sun"></i>
+                        <i class="fas fa-seedling"></i>
+                    </div>
+                </div>
             </div>
-        </div>
+
+            <div class="input-section glass-card">
+                <h3><i class="fas fa-map-marker-alt"></i> Location Lookup</h3>
+                <p class="input-description">Enter an Eircode or Townland (e.g., V94 XXXX or 'Golden, Tipperary')</p>
+                
+                <div class="input-group">
+                    <div class="input-with-icon" style="grid-column: 1 / -1;">
+                        <i class="fas fa-search-location"></i>
+                        <input type="text" id="locationInput" placeholder="Enter Eircode or Area Name" style="text-transform: uppercase;">
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button id="checkBtn" class="primary-btn" onclick="checkConditions()">
+                        <i class="fas fa-bolt"></i> Check Spreading Conditions
+                    </button>
+                    <button id="locationBtn" class="secondary-btn" onclick="getCurrentLocation()">
+                        <i class="fas fa-location-arrow"></i> Use My GPS
+                    </button>
+                </div>
+                
+                <div class="info-tip">
+                    <i class="fas fa-info-circle"></i>
+                    <p>If your Eircode isn't found, try typing your <b>Townland and County</b> instead.</p>
+                </div>
+            </div>
+
+            <div id="resultsContainer" class="results-container" style="display: none;">
+                <div class="glass-card result-card">
+                    <div class="result-header">
+                        <h3><i class="fas fa-clipboard-check"></i> Recommendation</h3>
+                        <div id="resultStatus" class="status-badge"></div>
+                    </div>
+                    
+                    <div class="recommendation-content">
+                        <div id="resultMessage" class="result-message"></div>
+                        
+                        <div class="reason-section">
+                            <h4><i class="fas fa-list-check"></i> Analysis Factors</h4>
+                            <ul id="reasonsList" class="reasons-list"></ul>
+                        </div>
+                        
+                        <div class="weather-forecast">
+                            <h4><i class="fas fa-cloud-sun-rain"></i> 3-Day Forecast</h4>
+                            <div id="weatherInfo" class="weather-cards"></div>
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="action-btn share-btn" onclick="shareReport()">
+                                <i class="fas fa-share-alt"></i> Share Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Eco-Spread &copy; 2026 | Patrick Moran </p>
+        </footer>
     </div>
 
     <script src="script.js"></script>
