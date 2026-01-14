@@ -1,30 +1,26 @@
 export default async function handler(req, res) {
-    const { eircode, lat, lon } = req.query;
-    const apiKey = process.env.GOOGLE_GEOCODING_API_KEY;
+  const { eircode } = req.query;
 
-    let url;
+  if (!eircode) {
+    return res.status(400).json({ error: "Missing Eircode" });
+  }
 
-    if (eircode) {
-        url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(eircode)}&region=ie&key=${apiKey}`;
-    } else {
-        url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${apiKey}`;
+  try {
+    const apiKey = process.env.GOOGLE_GEOCODE_KEY;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(eircode)}&key=${apiKey}`;
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.status !== 'OK' || !data.results.length) {
+      return res.status(404).json({ error: "Location not found" });
     }
 
-    const r = await fetch(url);
-    const d = await r.json();
+    const location = data.results[0].geometry.location;
 
-    if (!d.results?.length) {
-        return res.status(404).json({ error: 'Not found' });
-    }
-
-    const loc = d.results[0].geometry.location;
-    const eir = d.results[0].address_components.find(c =>
-        c.types.includes('postal_code')
-    )?.long_name;
-
-    res.json({
-        lat: loc.lat,
-        lon: loc.lng,
-        eircode: eir || null
-    });
+    res.status(200).json({ location });
+  } catch (err) {
+    res.status(500).json({ error: "Geocoding failed", details: err.message });
+  }
 }
+
