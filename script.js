@@ -1,3 +1,5 @@
+let currentLat = null;
+let currentLon = null;
 
 function showLoading() {
     document.getElementById('loadingScreen').classList.add('active');
@@ -11,35 +13,33 @@ function hideLoading() {
 
 function getCurrentLocation() {
     showLoading();
-    
+
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
-                document.getElementById('lat').value = position.coords.latitude.toFixed(4);
-                document.getElementById('lon').value = position.coords.longitude.toFixed(4);
+                currentLat = position.coords.latitude;
+                currentLon = position.coords.longitude;
+
                 hideLoading();
-                
-                
                 showToast('Location detected successfully!', 'success');
             },
             (error) => {
                 hideLoading();
-                let errorMessage = 'Unable to retrieve your location. Please enter coordinates manually.';
-                
-                switch(error.code) {
+                let errorMessage = 'Unable to retrieve your location.';
+
+                switch (error.code) {
                     case error.PERMISSION_DENIED:
-                        errorMessage = 'Location permission denied. Please enable location services or enter coordinates manually.';
+                        errorMessage = 'Location permission denied.';
                         break;
                     case error.POSITION_UNAVAILABLE:
-                        errorMessage = 'Location information is unavailable. Please enter coordinates manually.';
+                        errorMessage = 'Location information is unavailable.';
                         break;
                     case error.TIMEOUT:
-                        errorMessage = 'Location request timed out. Please try again or enter coordinates manually.';
+                        errorMessage = 'Location request timed out.';
                         break;
                 }
-                
+
                 showToast(errorMessage, 'error');
-                console.error('Geolocation error:', error);
             }
         );
     } else {
@@ -50,49 +50,66 @@ function getCurrentLocation() {
 
 
 async function checkConditions() {
-    const lat = document.getElementById('lat').value;
-    const lon = document.getElementById('lon').value;
-    
-    
+    let lat = currentLat;
+    let lon = currentLon;
+
+    const eircodeInput = document.getElementById('eircode');
+    const eircode = eircodeInput ? eircodeInput.value.trim() : '';
+
+    // If no GPS location, try Eircode
+    if ((!lat || !lon) && eircode) {
+        try {
+            showLoading();
+
+            const geoRes = await fetch(`/api/geocode?eircode=${encodeURIComponent(eircode)}`);
+            const geoData = await geoRes.json();
+
+            if (!geoRes.ok) {
+                throw new Error(geoData.error || 'Invalid Eircode');
+            }
+
+            lat = geoData.location.lat;
+            lon = geoData.location.lng;
+
+            currentLat = lat;
+            currentLon = lon;
+        } catch (err) {
+            hideLoading();
+            showToast(err.message, 'error');
+            return;
+        }
+    }
+
     if (!lat || !lon) {
-        showToast('Please enter both latitude and longitude coordinates.', 'error');
+        showToast('Please enter an Eircode or use your current location.', 'error');
         return;
     }
-    
-    if (isNaN(lat) || isNaN(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-        showToast('Please enter valid coordinates. Latitude: -90 to 90, Longitude: -180 to 180.', 'error');
-        return;
-    }
-    
-    showLoading();
-    
+
     try {
         const response = await fetch(`/api/check?lat=${lat}&lon=${lon}`);
-        
+
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.message || `Server error: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
-       
+
         if (data.error) {
             throw new Error(data.message || 'Weather service error');
         }
-        
+
         displayResults(data);
-        
+
     } catch (error) {
         console.error('Error fetching data:', error);
         hideLoading();
-        
-       
         showToast(`Error: ${error.message}`, 'error');
-        
-       
         document.getElementById('resultsContainer').style.display = 'none';
+        return;
     }
+
+    hideLoading();
 }
 
 
@@ -408,8 +425,7 @@ document.getElementById('lon').addEventListener('input', function(e) {
 
 window.addEventListener('DOMContentLoaded', () => {
    
-    document.getElementById('lat').value = '50.0755';
-    document.getElementById('lon').value = '14.4378';
+  
     
     
     const buttons = document.querySelectorAll('button');
