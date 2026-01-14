@@ -4,149 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eco-Spread | Slurry Spreading Advisor</title>
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="loadingScreen" class="loading-screen">
-        <div class="loading-content">
-            <div class="leaf-loader">
-                <div class="leaf leaf1"></div>
-                <div class="leaf leaf2"></div>
-                <div class="leaf leaf3"></div>
-            </div>
-            <p>Analyzing weather conditions...</p>
-            <div class="loading-subtitle">Checking soil suitability and environmental factors</div>
+
+<div class="container">
+
+    <header class="header">
+        <div class="logo">
+            <i class="fas fa-leaf"></i>
+            <h1>Eco-Spread</h1>
         </div>
-    </div>
+        <p class="tagline">Intelligent Slurry Spreading Advisor</p>
+    </header>
 
-    <div class="container">
-        <header class="header">
-            <div class="logo">
-                <i class="fas fa-leaf"></i>
-                <h1>Eco-Spread</h1>
-            </div>
-            <p class="tagline">Intelligent Slurry Spreading Advisor</p>
-        </header>
+    <main class="main-content">
 
-        <main class="main-content">
-            <div class="hero-section">
-                <div class="hero-text">
-                    <h2>Optimize Your Slurry Spreading</h2>
-                    <p>Get science-based recommendations for slurry application based on real-time weather, soil conditions, and environmental factors.</p>
-                </div>
-                <div class="hero-image">
-                    <div class="nature-icon">
-                        <i class="fas fa-tractor"></i>
-                        <i class="fas fa-cloud-sun"></i>
-                        <i class="fas fa-seedling"></i>
-                    </div>
+        <div class="input-section glass-card">
+            <h3><i class="fas fa-map-marker-alt"></i> Enter Your Location</h3>
+            <p class="input-description">
+                Enter your Eircode or allow location access for precise recommendations
+            </p>
+
+            <div class="input-group">
+                <div class="input-with-icon">
+                    <i class="fas fa-map-pin"></i>
+                    <input
+                        type="text"
+                        id="eircode"
+                        placeholder="Enter Eircode (e.g. R95 X2N6)"
+                    >
                 </div>
             </div>
 
-            <div class="input-section glass-card">
-                <h3><i class="fas fa-map-marker-alt"></i> Enter Your Location</h3>
-                <p class="input-description">Provide coordinates or allow location access for precise recommendations</p>
-                
-                <div class="input-group">
-                    <div class="input-with-icon">
-                        <i class="fas fa-globe-europe"></i>
-                        <input type="number" id="lat" placeholder="Latitude (e.g., 52.5200)" step="any">
-                    </div>
-                    <div class="input-with-icon">
-                        <i class="fas fa-globe-americas"></i>
-                        <input type="number" id="lon" placeholder="Longitude (e.g., 13.4050)" step="any">
-                    </div>
-                </div>
-                
-                <div class="button-group">
-                    <button id="checkBtn" class="primary-btn" onclick="checkConditions()">
-                        <i class="fas fa-search"></i> Analyze Conditions
-                    </button>
-                    <button id="locationBtn" class="secondary-btn" onclick="getCurrentLocation()">
-                        <i class="fas fa-location-crosshairs"></i> Use My Location
-                    </button>
-                </div>
-                
-                <div class="info-tip">
-                    <i class="fas fa-info-circle"></i>
-                    <p>For best results, check in the morning for same-day spreading decisions.</p>
-                </div>
+            <div class="button-group">
+                <button class="primary-btn" onclick="checkConditions()">
+                    <i class="fas fa-search"></i> Analyze Conditions
+                </button>
+                <button class="secondary-btn" onclick="getCurrentLocation()">
+                    <i class="fas fa-location-crosshairs"></i> Use My Location
+                </button>
             </div>
+        </div>
 
-            <div id="resultsContainer" class="results-container" style="display: none;">
-                <div class="glass-card result-card">
-                    <div class="result-header">
-                        <h3><i class="fas fa-clipboard-check"></i> Spreading Recommendation</h3>
-                        <div id="resultStatus" class="status-badge"></div>
-                    </div>
-                    
-                    <div class="recommendation-content">
-                        <div id="resultMessage" class="result-message"></div>
-                        
-                        <div class="reason-section">
-                            <h4><i class="fas fa-list-check"></i> Key Factors</h4>
-                            <ul id="reasonsList" class="reasons-list"></ul>
-                        </div>
-                        
-                        <div class="weather-forecast">
-                            <h4><i class="fas fa-cloud-sun-rain"></i> Weather Forecast</h4>
-                            <div id="weatherInfo" class="weather-cards"></div>
-                        </div>
-                        
-                        <div class="action-buttons">
-                            <button class="action-btn share-btn">
-                                <i class="fas fa-share-alt"></i> Share Report
-                            </button>
-                            <button class="action-btn schedule-btn">
-                                <i class="fas fa-calendar-plus"></i> Schedule Reminder
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div id="resultsContainer" style="display:none;"></div>
 
-            <div class="info-section">
-                <h3><i class="fas fa-chart-line"></i> Why These Factors Matter</h3>
-                <div class="factor-cards">
-                    <div class="factor-card">
-                        <div class="factor-icon rain">
-                            <i class="fas fa-cloud-rain"></i>
-                        </div>
-                        <h4>Rainfall</h4>
-                        <p>Heavy rain can cause runoff, reducing nutrient absorption and increasing environmental pollution.</p>
-                    </div>
-                    <div class="factor-card">
-                        <div class="factor-icon wind">
-                            <i class="fas fa-wind"></i>
-                        </div>
-                        <h4>Wind Speed</h4>
-                        <p>High winds cause uneven spreading, nutrient drift, and reduced application accuracy.</p>
-                    </div>
-                    <div class="factor-card">
-                        <div class="factor-icon temp">
-                            <i class="fas fa-thermometer-half"></i>
-                        </div>
-                        <h4>Temperature</h4>
-                        <p>Ideal temperatures (5-15°C) optimize nutrient absorption while minimizing odor and volatilization.</p>
-                    </div>
-                    <div class="factor-card">
-                        <div class="factor-icon humidity">
-                            <i class="fas fa-tint"></i>
-                        </div>
-                        <h4>Humidity</h4>
-                        <p>Moderate humidity reduces evaporation and helps nutrients penetrate the soil effectively.</p>
-                    </div>
-                </div>
-            </div>
-        </main>
+    </main>
 
-        <footer class="footer">
-            <p>Eco-Spread &copy; 2026 | Patrick Moran </p>
-        </footer>
-    </div>
+    <footer class="footer">
+        <p>Eco-Spread © 2026 | Patrick Moran</p>
+    </footer>
 
-    <script src="script.js"></script>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
