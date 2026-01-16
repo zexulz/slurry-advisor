@@ -56,7 +56,7 @@ async function checkConditions() {
     const eircodeInput = document.getElementById('eircode');
     const eircode = eircodeInput ? eircodeInput.value.trim() : '';
 
-    // If no GPS location, try Eircode
+ 
     if ((!lat || !lon) && eircode) {
         try {
             showLoading();
