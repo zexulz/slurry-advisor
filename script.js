@@ -44,7 +44,7 @@ function getCurrentLocation() {
         );
     } else {
         hideLoading();
-        showToast('Geolocation is not supported by your browser.', 'error');
+        showToast('Geolocation is not supported by your browser, try chrome or brave.', 'error');
     }
 }
 
@@ -65,7 +65,7 @@ async function checkConditions() {
             const geoData = await geoRes.json();
 
             if (!geoRes.ok) {
-                throw new Error(geoData.error || 'Invalid Eircode');
+                throw new Error(geoData.error || 'Invalid Eircode-make sure your eircode is correct');
             }
 
             lat = geoData.location.lat;
@@ -96,7 +96,7 @@ async function checkConditions() {
         const data = await response.json();
 
         if (data.error) {
-            throw new Error(data.message || 'Weather service error');
+            throw new Error(data.message || 'Weather service error try again later');
         }
 
         displayResults(data);
