@@ -25,7 +25,7 @@ function getCurrentLocation() {
             },
             (error) => {
                 hideLoading();
-                let errorMessage = 'Unable to retrieve your location.';
+                let errorMessage = 'Unable to retrieve your location please make sure eircode is spelt correctly';
 
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
