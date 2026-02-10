@@ -5,11 +5,9 @@ function showLoading() {
     document.getElementById('loadingScreen').classList.add('active');
 }
 
-
 function hideLoading() {
     document.getElementById('loadingScreen').classList.remove('active');
 }
-
 
 function getCurrentLocation() {
     showLoading();
@@ -22,14 +20,16 @@ function getCurrentLocation() {
 
                 hideLoading();
                 showToast('Location detected successfully!', 'success');
+                
+                checkConditions();
             },
             (error) => {
                 hideLoading();
-                let errorMessage = 'Unable to retrieve your location please make sure eircode is spelt correctly';
+                let errorMessage = 'Unable to retrieve your location. Please make sure eircode is spelt correctly or enter location manually.';
 
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
-                        errorMessage = 'Location permission denied.';
+                        errorMessage = 'Location permission denied. Please enable location services or use Eircode.';
                         break;
                     case error.POSITION_UNAVAILABLE:
                         errorMessage = 'Location information is unavailable.';
@@ -44,10 +44,9 @@ function getCurrentLocation() {
         );
     } else {
         hideLoading();
-        showToast('Geolocation is not supported by your browser, try chrome or brave.', 'error');
+        showToast('Geolocation is not supported by your browser. Try Chrome or Brave, or use Eircode.', 'error');
     }
 }
-
 
 async function checkConditions() {
     let lat = currentLat;
@@ -56,7 +55,6 @@ async function checkConditions() {
     const eircodeInput = document.getElementById('eircode');
     const eircode = eircodeInput ? eircodeInput.value.trim() : '';
 
- 
     if ((!lat || !lon) && eircode) {
         try {
             showLoading();
@@ -65,7 +63,7 @@ async function checkConditions() {
             const geoData = await geoRes.json();
 
             if (!geoRes.ok) {
-                throw new Error(geoData.error || 'Invalid Eircode-make sure your eircode is correct');
+                throw new Error(geoData.error || 'Invalid Eircode - make sure your eircode is correct');
             }
 
             lat = geoData.location.lat;
@@ -86,6 +84,7 @@ async function checkConditions() {
     }
 
     try {
+        showLoading();
         const response = await fetch(`/api/check?lat=${lat}&lon=${lon}`);
 
         if (!response.ok) {
@@ -96,7 +95,7 @@ async function checkConditions() {
         const data = await response.json();
 
         if (data.error) {
-            throw new Error(data.message || 'Weather service error try again later');
+            throw new Error(data.message || 'Weather service error. Try again later.');
         }
 
         displayResults(data);
@@ -112,7 +111,6 @@ async function checkConditions() {
     hideLoading();
 }
 
-
 function displayResults(data) {
     const resultsContainer = document.getElementById('resultsContainer');
     const resultStatus = document.getElementById('resultStatus');
@@ -120,18 +118,20 @@ function displayResults(data) {
     const reasonsList = document.getElementById('reasonsList');
     const weatherInfo = document.getElementById('weatherInfo');
     
-  
     resultsContainer.style.display = 'block';
     
+    const previousLocationInfo = document.querySelector('.location-info');
+    if (previousLocationInfo) {
+        previousLocationInfo.remove();
+    }
     
-    const isGoodTime = data.result.includes("GOOD") || data.result.includes("EXCELLENT") || data.result.includes("MODERATELY GOOD");
-    const isCritical = data.result.includes("BAD") || data.result.includes("RISKY");
+    const isGoodTime = data.result && (data.result.includes("GOOD") || data.result.includes("EXCELLENT") || data.result.includes("MODERATELY GOOD"));
+    const isCritical = data.result && (data.result.includes("BAD") || data.result.includes("RISKY"));
     
     resultStatus.textContent = isCritical ? "Not Recommended" : "Recommended";
     resultStatus.className = `status-badge ${isCritical ? 'bad' : 'good'}`;
     
-    
-    if (data.result.includes("EXCELLENT")) {
+    if (data.result && data.result.includes("EXCELLENT")) {
         resultMessage.innerHTML = `
             <i class="fas fa-check-circle" style="color: var(--success-green); margin-right: 10px;"></i>
             <strong>Excellent conditions detected!</strong> This is an ideal time to spread slurry. 
@@ -139,7 +139,7 @@ function displayResults(data) {
         `;
         resultMessage.style.background = 'rgba(39, 174, 96, 0.1)';
         resultMessage.style.borderLeft = '4px solid var(--success-green)';
-    } else if (data.result.includes("GOOD")) {
+    } else if (data.result && data.result.includes("GOOD")) {
         resultMessage.innerHTML = `
             <i class="fas fa-check-circle" style="color: var(--success-green); margin-right: 10px;"></i>
             <strong>Good conditions detected!</strong> This is a suitable time to spread slurry. 
@@ -147,7 +147,7 @@ function displayResults(data) {
         `;
         resultMessage.style.background = 'rgba(39, 174, 96, 0.1)';
         resultMessage.style.borderLeft = '4px solid var(--success-green)';
-    } else if (data.result.includes("MODERATELY GOOD")) {
+    } else if (data.result && data.result.includes("MODERATELY GOOD")) {
         resultMessage.innerHTML = `
             <i class="fas fa-exclamation-circle" style="color: #f39c12; margin-right: 10px;"></i>
             <strong>Moderate conditions detected.</strong> You can spread slurry with caution. 
@@ -155,7 +155,7 @@ function displayResults(data) {
         `;
         resultMessage.style.background = 'rgba(243, 156, 18, 0.1)';
         resultMessage.style.borderLeft = '4px solid #f39c12';
-    } else if (data.result.includes("RISKY")) {
+    } else if (data.result && data.result.includes("RISKY")) {
         resultMessage.innerHTML = `
             <i class="fas fa-exclamation-triangle" style="color: #e67e22; margin-right: 10px;"></i>
             <strong>Risky conditions detected.</strong> Consider postponing slurry spreading. 
@@ -163,8 +163,7 @@ function displayResults(data) {
         `;
         resultMessage.style.background = 'rgba(230, 126, 34, 0.1)';
         resultMessage.style.borderLeft = '4px solid #e67e22';
-    } else {
-        
+    } else if (data.result && data.result.includes("BAD")) {
         resultMessage.innerHTML = `
             <i class="fas fa-times-circle" style="color: var(--warning-red); margin-right: 10px;"></i>
             <strong>Unfavorable conditions detected.</strong> It is not recommended to spread slurry at this time. 
@@ -172,9 +171,16 @@ function displayResults(data) {
         `;
         resultMessage.style.background = 'rgba(231, 76, 60, 0.1)';
         resultMessage.style.borderLeft = '4px solid var(--warning-red)';
+    } else {
+        // Fallback for unknown result
+        resultMessage.innerHTML = `
+            <i class="fas fa-question-circle" style="color: #95a5a6; margin-right: 10px;"></i>
+            <strong>Analysis complete.</strong> Please review the detailed weather information below.
+        `;
+        resultMessage.style.background = 'rgba(149, 165, 166, 0.1)';
+        resultMessage.style.borderLeft = '4px solid #95a5a6';
     }
     
-  
     reasonsList.innerHTML = '';
     if (data.reasons && data.reasons.length > 0) {
         data.reasons.forEach(reason => {
@@ -188,45 +194,62 @@ function displayResults(data) {
         reasonsList.appendChild(li);
     }
     
-    
+    // undefined humidity patch
     weatherInfo.innerHTML = '';
     if (data.forecast && data.forecast.length > 0) {
         data.forecast.forEach(day => {
             const weatherCard = document.createElement('div');
             weatherCard.className = 'weather-card';
             
-           
+            // Map weather icons
             const iconMap = {
                 'sun': 'fas fa-sun',
+                'clear': 'fas fa-sun',
                 'cloud': 'fas fa-cloud',
+                'partly-cloudy': 'fas fa-cloud-sun',
                 'cloud-rain': 'fas fa-cloud-rain',
+                'rain': 'fas fa-cloud-rain',
                 'bolt': 'fas fa-bolt',
                 'snowflake': 'fas fa-snowflake',
+                'snow': 'fas fa-snowflake',
                 'smog': 'fas fa-smog',
+                'fog': 'fas fa-smog',
                 'wind': 'fas fa-wind',
                 'tornado': 'fas fa-tornado',
                 'question': 'fas fa-question'
             };
             
-            const iconClass = iconMap[day.icon] || iconMap['question'];
+            // Get icon class, default to question if not found
+            const weatherIcon = day.icon || day.conditions || 'question';
+            const iconClass = iconMap[weatherIcon.toLowerCase()] || iconMap[weatherIcon] || iconMap['question'];
+            
+            // Use safe property access with fallbacks
+            const humidity = day.humidity !== undefined ? `${day.humidity}%` : 'N/A';
+            const rain = day.rain !== undefined ? day.rain : '0mm';
+            const wind = day.wind !== undefined ? day.wind : 'N/A';
+            const temp = day.temp !== undefined ? day.temp : 'N/A';
+            const tempRange = day.tempRange !== undefined ? day.tempRange : '';
+            const conditions = day.conditions !== undefined ? day.conditions : 'No data';
+            const dayName = day.day !== undefined ? day.day : 'Day';
+            const date = day.date !== undefined ? day.date : '';
             
             weatherCard.innerHTML = `
-                <div class="day">${day.day}</div>
-                <div class="date">${day.date}</div>
+                <div class="day">${dayName}</div>
+                <div class="date">${date}</div>
                 <div class="weather-icon"><i class="${iconClass}"></i></div>
-                <div class="temp">${day.temp}</div>
-                <div class="temp-range">${day.tempRange}</div>
-                <div class="conditions">${day.conditions}</div>
+                <div class="temp">${temp}</div>
+                <div class="temp-range">${tempRange}</div>
+                <div class="conditions">${conditions}</div>
                 <div class="details">
-                    <span><i class="fas fa-cloud-rain"></i> ${day.rain}</span>
-                    <span><i class="fas fa-wind"></i> ${day.wind}</span>
-                    <span><i class="fas fa-tint"></i> ${day.humidity}</span>
+                    <span><i class="fas fa-cloud-rain"></i> ${rain}</span>
+                    <span><i class="fas fa-wind"></i> ${wind}</span>
+                    <span><i class="fas fa-tint"></i> ${humidity}</span>
                 </div>
             `;
             weatherInfo.appendChild(weatherCard);
         });
     } else {
-       
+        // No forecast data available
         const noDataCard = document.createElement('div');
         noDataCard.className = 'weather-card no-data';
         noDataCard.innerHTML = `
@@ -238,7 +261,7 @@ function displayResults(data) {
         weatherInfo.appendChild(noDataCard);
     }
     
-   
+    // Add location information if available
     if (data.metadata && data.metadata.location) {
         const locationInfo = document.createElement('div');
         locationInfo.className = 'location-info';
@@ -246,46 +269,39 @@ function displayResults(data) {
             <hr style="margin: 20px 0; border-color: rgba(0,0,0,0.1);">
             <div style="font-size: 0.9rem; color: var(--text-light);">
                 <i class="fas fa-map-marker-alt" style="margin-right: 5px;"></i>
-                Location: ${data.metadata.location.name} (${data.metadata.location.lat.toFixed(4)}, ${data.metadata.location.lon.toFixed(4)})
+                Location: ${data.metadata.location.name || 'Unknown location'} 
+                (${data.metadata.location.lat ? data.metadata.location.lat.toFixed(4) : 'N/A'}, 
+                ${data.metadata.location.lon ? data.metadata.location.lon.toFixed(4) : 'N/A'})
                 <br>
-                <small>Analysis performed at ${new Date(data.metadata.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                <small>Analysis performed at ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
             </div>
         `;
         document.querySelector('.recommendation-content').appendChild(locationInfo);
     }
     
-    
     resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     
-    
     showToast('Analysis complete! Recommendations ready.', 'success');
-    
-    
-    hideLoading();
 }
 
-
 function showToast(message, type = 'info') {
-   
     const existingToast = document.querySelector('.toast');
     if (existingToast) {
         existingToast.remove();
     }
     
-   
     let icon = 'info-circle';
     if (type === 'success') icon = 'check-circle';
     if (type === 'error') icon = 'exclamation-circle';
     if (type === 'warning') icon = 'exclamation-triangle';
     
-    
+    // Create toast element
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     toast.innerHTML = `
         <i class="fas fa-${icon}"></i>
         <span>${message}</span>
     `;
-    
     
     toast.style.cssText = `
         position: fixed;
@@ -309,7 +325,6 @@ function showToast(message, type = 'info') {
     
     document.body.appendChild(toast);
     
-    
     setTimeout(() => {
         toast.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => {
@@ -320,7 +335,7 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-
+// Add toast styles if not already present
 if (!document.querySelector('#toast-styles')) {
     const toastStyles = document.createElement('style');
     toastStyles.id = 'toast-styles';
@@ -386,46 +401,57 @@ if (!document.querySelector('#toast-styles')) {
     document.head.appendChild(toastStyles);
 }
 
-
-document.getElementById('lat').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        checkConditions();
-    }
-});
-
-document.getElementById('lon').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        checkConditions();
-    }
-});
-
-
-document.getElementById('lat').addEventListener('input', function(e) {
-    const value = parseFloat(e.target.value);
-    if (value < -90 || value > 90) {
-        this.style.borderColor = 'var(--warning-red)';
-        this.style.boxShadow = '0 0 0 3px rgba(231, 76, 60, 0.1)';
-    } else {
-        this.style.borderColor = '#e0e6ed';
-        this.style.boxShadow = 'none';
-    }
-});
-
-document.getElementById('lon').addEventListener('input', function(e) {
-    const value = parseFloat(e.target.value);
-    if (value < -180 || value > 180) {
-        this.style.borderColor = 'var(--warning-red)';
-        this.style.boxShadow = '0 0 0 3px rgba(231, 76, 60, 0.1)';
-    } else {
-        this.style.borderColor = '#e0e6ed';
-        this.style.boxShadow = 'none';
-    }
-});
-
-
 window.addEventListener('DOMContentLoaded', () => {
-   
-  
+    const latInput = document.getElementById('lat');
+    const lonInput = document.getElementById('lon');
+    
+    if (latInput) {
+        latInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkConditions();
+            }
+        });
+
+        latInput.addEventListener('input', function(e) {
+            const value = parseFloat(e.target.value);
+            if (isNaN(value) || value < -90 || value > 90) {
+                this.style.borderColor = 'var(--warning-red)';
+                this.style.boxShadow = '0 0 0 3px rgba(231, 76, 60, 0.1)';
+            } else {
+                this.style.borderColor = '#e0e6ed';
+                this.style.boxShadow = 'none';
+            }
+        });
+    }
+    
+    if (lonInput) {
+        lonInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkConditions();
+            }
+        });
+
+        lonInput.addEventListener('input', function(e) {
+            const value = parseFloat(e.target.value);
+            if (isNaN(value) || value < -180 || value > 180) {
+                this.style.borderColor = 'var(--warning-red)';
+                this.style.boxShadow = '0 0 0 3px rgba(231, 76, 60, 0.1)';
+            } else {
+                this.style.borderColor = '#e0e6ed';
+                this.style.boxShadow = 'none';
+            }
+        });
+    }
+    
+    // Add Enter key support for Eircode input
+    const eircodeInput = document.getElementById('eircode');
+    if (eircodeInput) {
+        eircodeInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkConditions();
+            }
+        });
+    }
     
     
     const buttons = document.querySelectorAll('button');
@@ -438,7 +464,7 @@ window.addEventListener('DOMContentLoaded', () => {
             this.style.transform = 'translateY(0)';
         });
         
-       
+        // Ripple effect on click
         button.addEventListener('click', function(e) {
             const ripple = document.createElement('span');
             const rect = this.getBoundingClientRect();
@@ -467,7 +493,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-   
+    
     if (!document.querySelector('#ripple-styles')) {
         const rippleStyles = document.createElement('style');
         rippleStyles.id = 'ripple-styles';
@@ -500,11 +526,13 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-
+// Share functionality
 document.addEventListener('click', function(e) {
     if (e.target.closest('.share-btn')) {
         const resultText = document.getElementById('resultMessage').textContent;
-        const location = `${document.getElementById('lat').value}, ${document.getElementById('lon').value}`;
+        const location = currentLat && currentLon ? 
+            `${currentLat.toFixed(4)}, ${currentLon.toFixed(4)}` : 
+            'Unknown location';
         
         const shareData = {
             title: 'Slurry Spreading Recommendation',
@@ -521,8 +549,8 @@ document.addEventListener('click', function(e) {
                     }
                 });
         } else {
-            
-            const textToCopy = `Slurry Spreading Recommendation\nLocation: ${location}\nResult: ${resultText}\n\nGenerated by Eco-Spread Advisor`;
+            // Fallback: copy to clipboard
+            const textToCopy = `Slurry Spreading Recommendation\nLocation: ${location}\nResult: ${resultText}\n\nGenerated by Slurry Advisor`;
             
             navigator.clipboard.writeText(textToCopy)
                 .then(() => showToast('Report copied to clipboard!', 'success'))
@@ -530,10 +558,20 @@ document.addEventListener('click', function(e) {
         }
     }
     
-   
+    // Schedule reminder
     if (e.target.closest('.schedule-btn')) {
         showToast('Reminder feature coming soon!', 'info');
     }
 });
-//completed on 16/01/26
-//FIX UNDFINED 
+
+// Add event listener for the check conditions button if it exists
+const checkButton = document.querySelector('.check-btn, [onclick="checkConditions()"], button:contains("Check Conditions")');
+if (checkButton) {
+    checkButton.addEventListener('click', checkConditions);
+}
+
+// Add event listener for the current location button if it exists
+const locationButton = document.querySelector('.location-btn, [onclick="getCurrentLocation()"], button:contains("Use My Location")');
+if (locationButton) {
+    locationButton.addEventListener('click', getCurrentLocation);
+}
