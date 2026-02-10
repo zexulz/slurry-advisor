@@ -194,14 +194,14 @@ function displayResults(data) {
         reasonsList.appendChild(li);
     }
     
-    // undefined humidity patch
+   
     weatherInfo.innerHTML = '';
     if (data.forecast && data.forecast.length > 0) {
         data.forecast.forEach(day => {
             const weatherCard = document.createElement('div');
             weatherCard.className = 'weather-card';
             
-            // Map weather icons
+           
             const iconMap = {
                 'sun': 'fas fa-sun',
                 'clear': 'fas fa-sun',
@@ -219,12 +219,12 @@ function displayResults(data) {
                 'question': 'fas fa-question'
             };
             
-            // Get icon class, default to question if not found
+            
             const weatherIcon = day.icon || day.conditions || 'question';
             const iconClass = iconMap[weatherIcon.toLowerCase()] || iconMap[weatherIcon] || iconMap['question'];
             
-            // Use safe property access with fallbacks
-            const humidity = day.humidity !== undefined ? `${day.humidity}%` : 'N/A';
+           
+            const humidity = day.humidity !== undefined ? `${day.humidity}` : 'N/A';
             const rain = day.rain !== undefined ? day.rain : '0mm';
             const wind = day.wind !== undefined ? day.wind : 'N/A';
             const temp = day.temp !== undefined ? day.temp : 'N/A';
