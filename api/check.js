@@ -403,11 +403,115 @@ function analyzeConditions(currentData, forecastData) {
     }
     
    
-    function generateDetailedForecast(forecastList) {
+    const forecast = generateDetailedForecast(forecastList);
+    
+   
+    const maxPossibleScore = 86; 
+    const adjustedScore = Math.max(0, Math.min(100, (score + 40) * (100 / maxPossibleScore)));
+    
+   
+    let result;
+    let confidence = 'high';
+    
+   
+    if (criticalFactors.length > 0) {
+       
+        const severeCriticalFactors = ['heavy_rainfall', 'heavy_rain_forecast', 'snow_ice', 'storm_conditions'];
+        const hasSevereCritical = criticalFactors.some(factor => severeCriticalFactors.includes(factor));
+        
+        if (hasSevereCritical) {
+            result = "BAD TIME TO SPREAD SLURRY";
+            confidence = 'very high';
+            reasons.unshift('CRITICAL RISK FACTORS DETECTED - DO NOT SPREAD');
+        } else if (criticalFactors.length >= 2) {
+           
+            result = "BAD TIME TO SPREAD SLURRY";
+            confidence = 'high';
+            reasons.unshift('Multiple risk factors detected - high environmental risk');
+        } else {
+           
+            result = "RISKY TIME TO SPREAD SLURRY";
+            confidence = 'medium';
+            reasons.unshift('Significant risk factors present - caution required');
+        }
+    } else if (adjustedScore >= 85) {
+        result = "EXCELLENT TIME TO SPREAD SLURRY";
+        confidence = 'very high';
+        reasons.unshift('All conditions optimal for slurry application');
+    } else if (adjustedScore >= 70) {
+        result = "GOOD TIME TO SPREAD SLURRY";
+        confidence = 'high';
+        reasons.unshift('Conditions are favorable for slurry spreading');
+    } else if (adjustedScore >= 55) {
+        result = "MODERATELY GOOD TIME TO SPREAD SLURRY";
+        confidence = 'medium';
+        reasons.unshift('Most conditions acceptable with minor concerns');
+    } else if (adjustedScore >= 40) {
+        result = "RISKY TIME TO SPREAD SLURRY";
+        confidence = 'medium';
+        reasons.unshift('Multiple concerns present - consider postponing');
+    } else {
+        result = "BAD TIME TO SPREAD SLURRY";
+        confidence = 'high';
+        reasons.unshift('Unfavorable conditions - high risk of environmental impact');
+    }
+    
+    return {
+        result,
+        reasons,
+        forecast,
+        score: Math.round(adjustedScore),
+        factors,
+        confidence,
+        criticalFactors
+    };
+}
+
+
+function analyzeForecast(forecastList) {
+    let next24hRain = 0;
+    let next48hRain = 0;
+    let max24hWind = 0;
+    let min24hTemp = Infinity;
+    let max24hTemp = -Infinity;
+    let rainPeriods = 0; 
+    
+    for (let i = 0; i < Math.min(16, forecastList.length); i++) {
+        const period = forecastList[i];
+        
+        
+        const periodRain = period.rain ? period.rain['3h'] || 0 : 0;
+        if (periodRain > 0) {
+            rainPeriods++;
+        }
+        if (i < 8) next24hRain += periodRain;
+        next48hRain += periodRain;
+        
+       
+        const periodWind = period.wind.speed * 3.6;
+        max24hWind = Math.max(max24hWind, periodWind);
+        
+       
+        min24hTemp = Math.min(min24hTemp, period.main.temp);
+        max24hTemp = Math.max(max24hTemp, period.main.temp);
+    }
+    
+    return {
+        next24hRain,
+        next48hRain,
+        max24hWind,
+        rainPeriods,
+        min24hTemp: min24hTemp === Infinity ? null : min24hTemp,
+        max24hTemp: max24hTemp === -Infinity ? null : max24hTemp
+    };
+}
+
+
+function generateDetailedForecast(forecastList) {
     const dailyForecast = [];
     const days = ['Today', 'Tomorrow', 'Day After Tomorrow', 'In 3 Days'];
     
-    // Group by day
+  
     const groupedByDay = {};
     
     forecastList.forEach(period => {
@@ -419,7 +523,7 @@ function analyzeConditions(currentData, forecastData) {
                 temps: [],
                 rains: [],
                 winds: [],
-                humidities: [],  // ADDED THIS LINE
+                humidities: [],  // ADDED: Store humidity values
                 conditions: [],
                 timestamps: []
             };
@@ -428,25 +532,25 @@ function analyzeConditions(currentData, forecastData) {
         groupedByDay[dayKey].temps.push(period.main.temp);
         groupedByDay[dayKey].rains.push(period.rain ? period.rain['3h'] || 0 : 0);
         groupedByDay[dayKey].winds.push(period.wind.speed * 3.6);
-        groupedByDay[dayKey].humidities.push(period.main.humidity);  // ADDED THIS LINE
+        groupedByDay[dayKey].humidities.push(period.main.humidity);  // ADDED: Collect humidity
         groupedByDay[dayKey].conditions.push(period.weather[0]?.main || 'Clear');
         groupedByDay[dayKey].timestamps.push(date);
     });
     
-    // Process the first 4 days (or less if not available)
+   
     const dayKeys = Object.keys(groupedByDay).slice(0, 4);
     
     dayKeys.forEach((dayKey, index) => {
         const dayData = groupedByDay[dayKey];
         
-        // Calculate averages and totals
+       
         const avgTemp = dayData.temps.reduce((a, b) => a + b, 0) / dayData.temps.length;
         const totalRain = dayData.rains.reduce((a, b) => a + b, 0);
         const avgWind = dayData.winds.reduce((a, b) => a + b, 0) / dayData.winds.length;
         const maxWind = Math.max(...dayData.winds);
-        const avgHumidity = dayData.humidities.reduce((a, b) => a + b, 0) / dayData.humidities.length;  // ADDED THIS LINE
+        const avgHumidity = dayData.humidities.reduce((a, b) => a + b, 0) / dayData.humidities.length;  // ADDED: Calculate average humidity
         
-        // Determine most common condition
+     
         const conditionCounts = {};
         dayData.conditions.forEach(cond => {
             conditionCounts[cond] = (conditionCounts[cond] || 0) + 1;
@@ -455,7 +559,7 @@ function analyzeConditions(currentData, forecastData) {
             conditionCounts[a] > conditionCounts[b] ? a : b
         );
         
-        // Min and max temp for the day
+        
         const minTemp = Math.min(...dayData.temps);
         const maxTemp = Math.max(...dayData.temps);
         
@@ -467,13 +571,13 @@ function analyzeConditions(currentData, forecastData) {
             conditions: mostCommonCondition,
             rain: `${totalRain.toFixed(1)} mm`,
             wind: `${avgWind.toFixed(1)} km/h`,
-            humidity: `${Math.round(avgHumidity)}%`,  // ADDED THIS LINE
+            humidity: `${Math.round(avgHumidity)}%`,  // ADDED: Include humidity in the forecast
             maxWind: `${maxWind.toFixed(1)} km/h`,
             icon: getWeatherIcon(mostCommonCondition)
         });
     });
     
-    // Fill in missing days if necessary
+   
     while (dailyForecast.length < 4) {
         const nextDayIndex = dailyForecast.length;
         const placeholderDate = new Date();
@@ -487,7 +591,7 @@ function analyzeConditions(currentData, forecastData) {
             conditions: 'No data',
             rain: '-- mm',
             wind: '-- km/h',
-            humidity: '--%',  // ADDED THIS LINE
+            humidity: '--%',  // ADDED: Placeholder for humidity
             maxWind: '-- km/h',
             icon: 'question'
         });
